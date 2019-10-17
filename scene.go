@@ -42,6 +42,20 @@ func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 					return
 				}
 			case <-tick:
+				s.update()
+
+				if s.coal.FellToEarth() {
+					drawTitle(r, "GAME OVER")
+					time.Sleep(time.Second)
+					s.restart()
+				}
+
+				if s.coal.StoppedInTracks() {
+					drawTitle(r, "YOU WON")
+					time.Sleep(time.Second)
+					s.restart()
+				}
+
 				if err := s.paint(r); err != nil {
 					errc <- err
 				}
@@ -82,8 +96,12 @@ func (s *scene) handleClick(event *sdl.MouseButtonEvent) {
 		mouseX+mouseW > coalX &&
 		mouseY < coalY+coalH &&
 		mouseY+mouseH > coalY {
-		fmt.Println("BANG")
+		s.coal.collision()
 	}
+}
+
+func (s *scene) update() {
+	s.coal.update()
 }
 
 func (s *scene) paint(r *sdl.Renderer) error {
@@ -104,4 +122,8 @@ func (s *scene) paint(r *sdl.Renderer) error {
 func (s *scene) destroy() {
 	s.bg.Destroy()
 	s.coal.destroy()
+}
+
+func (s *scene) restart() {
+	s.coal.restart()
 }

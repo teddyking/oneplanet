@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"sync"
 
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
@@ -16,12 +18,17 @@ const (
 )
 
 type coal struct {
+	mu sync.RWMutex
+
 	time     int
 	textures []*sdl.Texture
 	life     int
 
 	x int32
 	y int32
+
+	fellToEarth     bool
+	stoppedInTracks bool
 }
 
 func newCoal(r *sdl.Renderer) (*coal, error) {
@@ -43,9 +50,30 @@ func newCoal(r *sdl.Renderer) (*coal, error) {
 	}, nil
 }
 
-func (c *coal) paint(r *sdl.Renderer) error {
+func (c *coal) collision() {
+	c.life--
+	fmt.Println("YOU GOT ME")
+}
+
+func (c *coal) update() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.time++
 	c.y += coalDropSpeed
+
+	if c.y > windowHeight {
+		c.fellToEarth = true
+	}
+
+	if c.life <= 0 {
+		c.stoppedInTracks = true
+	}
+}
+
+func (c *coal) paint(r *sdl.Renderer) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	i := c.time % len(c.textures)
 	rect := &sdl.Rect{W: coalWidth, H: coalHeight, X: c.x, Y: c.y}
@@ -58,11 +86,39 @@ func (c *coal) paint(r *sdl.Renderer) error {
 }
 
 func (c *coal) destroy() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for _, t := range c.textures {
 		t.Destroy()
 	}
 }
 
 func (c *coal) position() (int32, int32) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	return c.x, c.y
+}
+
+func (c *coal) FellToEarth() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.fellToEarth
+}
+
+func (c *coal) StoppedInTracks() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.stoppedInTracks
+}
+
+//TODO: add restart logic
+func (c *coal) restart() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	os.Exit(0)
 }

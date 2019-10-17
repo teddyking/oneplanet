@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -44,7 +45,7 @@ func run() error {
 
 	sdl.PumpEvents()
 
-	if err := drawTitle(r); err != nil {
+	if err := drawTitle(r, "One Planet"); err != nil {
 		return fmt.Errorf("unable to draw title: %v", err)
 	}
 
@@ -69,7 +70,7 @@ func run() error {
 	}
 }
 
-func drawTitle(r *sdl.Renderer) error {
+func drawTitle(r *sdl.Renderer, text string) error {
 	r.Clear()
 
 	f, err := ttf.OpenFont(pathToFont, 2048)
@@ -78,7 +79,7 @@ func drawTitle(r *sdl.Renderer) error {
 	}
 	defer f.Close()
 
-	s, err := f.RenderUTF8Solid("One Planet", sdl.Color{R: 50, G: 200, B: 50, A: 255})
+	s, err := f.RenderUTF8Solid(text, sdl.Color{R: 50, G: 200, B: 50, A: 255})
 	if err != nil {
 		return fmt.Errorf("could not render title: %v", err)
 	}
