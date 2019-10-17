@@ -47,7 +47,7 @@ func run() error {
 	}
 
 	// disply title for 1 second
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 100)
 
 	s, err := newScene(r)
 	if err != nil {

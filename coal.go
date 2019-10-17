@@ -10,6 +10,8 @@ import (
 type coal struct {
 	time     int
 	textures []*sdl.Texture
+
+	y float64
 }
 
 func newCoal(r *sdl.Renderer) (*coal, error) {
@@ -23,14 +25,16 @@ func newCoal(r *sdl.Renderer) (*coal, error) {
 		textures = append(textures, texture)
 	}
 
-	return &coal{textures: textures}, nil
+	return &coal{textures: textures, y: 200}, nil
 }
 
 func (c *coal) paint(r *sdl.Renderer) error {
 	c.time++
+	c.y -= 10
 
 	i := c.time % len(c.textures)
-	rect := &sdl.Rect{W: 150, H: 100, X: 200, Y: 200}
+	rect := &sdl.Rect{W: 150, H: 100, X: 300, Y: (200 - int32(c.y))}
+
 	if err := r.Copy(c.textures[i], nil, rect); err != nil {
 		return fmt.Errorf("could not copy coal: %v", err)
 	}
