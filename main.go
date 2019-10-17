@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -50,10 +49,13 @@ func run() error {
 				running = false
 				break
 			case *sdl.MouseButtonEvent:
-				// on any mousebuttonevent, show the background
-				if err := drawBackground(r); err != nil {
-					return fmt.Errorf("unable to draw background: %v", err)
+				s, err := newScene(r)
+				if err != nil {
+					return fmt.Errorf("unable to create scene: %v", err)
 				}
+				defer s.destroy()
+
+				s.paint(r)
 				break
 			}
 		}
@@ -80,23 +82,6 @@ func drawTitle(r *sdl.Renderer) error {
 	t, err := r.CreateTextureFromSurface(s)
 	if err != nil {
 		return fmt.Errorf("could not create texture: %v", err)
-	}
-	defer t.Destroy()
-
-	if err := r.Copy(t, nil, nil); err != nil {
-		return fmt.Errorf("could not copy texture: %v", err)
-	}
-
-	r.Present()
-	return nil
-}
-
-func drawBackground(r *sdl.Renderer) error {
-	r.Clear()
-
-	t, err := img.LoadTexture(r, pathToBackgroundImg)
-	if err != nil {
-		return fmt.Errorf("could not load background: %v", err)
 	}
 	defer t.Destroy()
 
