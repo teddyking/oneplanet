@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
-	ttf "github.com/veandco/go-sdl2/ttf"
+	"github.com/veandco/go-sdl2/ttf"
 )
 
-const pathToFont = "assets/fonts/block-cartoon.ttf"
+const (
+	pathToFont          = "assets/fonts/block-cartoon.ttf"
+	pathToBackgroundImg = "assets/img/background.jpg"
+)
 
 func main() {
 	if err := run(); err != nil {
@@ -43,8 +47,13 @@ func run() error {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
 			case *sdl.QuitEvent:
-				println("Quit")
 				running = false
+				break
+			case *sdl.MouseButtonEvent:
+				// on any mousebuttonevent, show the background
+				if err := drawBackground(r); err != nil {
+					return fmt.Errorf("unable to draw background: %v", err)
+				}
 				break
 			}
 		}
@@ -79,6 +88,22 @@ func drawTitle(r *sdl.Renderer) error {
 	}
 
 	r.Present()
+	return nil
+}
 
+func drawBackground(r *sdl.Renderer) error {
+	r.Clear()
+
+	t, err := img.LoadTexture(r, pathToBackgroundImg)
+	if err != nil {
+		return fmt.Errorf("could not load background: %v", err)
+	}
+	defer t.Destroy()
+
+	if err := r.Copy(t, nil, nil); err != nil {
+		return fmt.Errorf("could not copy texture: %v", err)
+	}
+
+	r.Present()
 	return nil
 }
