@@ -18,15 +18,19 @@ const (
 
 	numberHeight = 50
 	numberWidth  = 50
+
+	explosionHeight = 256
+	explosionWidth  = 128
 )
 
 type coal struct {
 	mu sync.RWMutex
 
-	time           int
-	textures       []*sdl.Texture
-	numberTextures []*sdl.Texture
-	life           int
+	time             int
+	textures         []*sdl.Texture
+	numberTextures   []*sdl.Texture
+	explosionTexture *sdl.Texture
+	life             int
 
 	x int32
 	y int32
@@ -56,12 +60,18 @@ func newCoal(r *sdl.Renderer) (*coal, error) {
 		numberTextures = append(numberTextures, texture)
 	}
 
+	explosionTexture, err := img.LoadTexture(r, fmt.Sprintf("%s/explosion.png", pathToImgs))
+	if err != nil {
+		return nil, fmt.Errorf("could not load texture: %v", err)
+	}
+
 	return &coal{
-		life:           3,
-		textures:       textures,
-		numberTextures: numberTextures,
-		x:              coalStartX,
-		y:              coalStartY,
+		life:             3,
+		textures:         textures,
+		numberTextures:   numberTextures,
+		explosionTexture: explosionTexture,
+		x:                coalStartX,
+		y:                coalStartY,
 	}, nil
 }
 
@@ -89,7 +99,18 @@ func (c *coal) paint(r *sdl.Renderer) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	if c.fellToEarth {
+	if c.stoppedInTracks {
+		explosionRect := &sdl.Rect{
+			W: explosionWidth,
+			H: explosionHeight,
+			X: c.x,
+			Y: c.y,
+		}
+
+		if err := r.Copy(c.explosionTexture, nil, explosionRect); err != nil {
+			return fmt.Errorf("could not copy coal: %v", err)
+		}
+
 		return nil
 	}
 

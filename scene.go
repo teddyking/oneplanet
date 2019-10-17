@@ -10,9 +10,8 @@ import (
 )
 
 type scene struct {
-	bg        *sdl.Texture
-	coal      *coal
-	explosion *explosion
+	bg   *sdl.Texture
+	coal *coal
 }
 
 func newScene(r *sdl.Renderer) (*scene, error) {
@@ -26,12 +25,7 @@ func newScene(r *sdl.Renderer) (*scene, error) {
 		return nil, fmt.Errorf("could not create coal: %v", err)
 	}
 
-	explosion, err := newExplosion(r)
-	if err != nil {
-		return nil, fmt.Errorf("could not create explosion: %v", err)
-	}
-
-	return &scene{bg: bg, coal: coal, explosion: explosion}, nil
+	return &scene{bg: bg, coal: coal}, nil
 }
 
 func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
@@ -48,14 +42,13 @@ func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 					return
 				}
 			case <-tick:
-				s.update()
-
 				if s.coal.FellToEarth() {
 					drawTitle(r, "GAME OVER")
 					time.Sleep(time.Second)
 					s.restart()
 				}
 
+				s.update()
 				if err := s.paint(r); err != nil {
 					errc <- err
 				}
@@ -111,19 +104,8 @@ func (s *scene) paint(r *sdl.Renderer) error {
 		return fmt.Errorf("could not copy background: %v", err)
 	}
 
-	if s.coal.stoppedInTracks {
-		x, y := s.coal.position()
-		if err := s.explosion.paint(r, x, y); err != nil {
-			return fmt.Errorf("could not paint explosion: %v", err)
-		}
-
-		s.coal.reset()
-	}
-
-	if !s.coal.stoppedInTracks {
-		if err := s.coal.paint(r); err != nil {
-			return fmt.Errorf("could not paint coal: %v", err)
-		}
+	if err := s.coal.paint(r); err != nil {
+		return fmt.Errorf("could not paint coal: %v", err)
 	}
 
 	r.Present()
