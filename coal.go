@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
@@ -12,7 +11,7 @@ import (
 const (
 	coalHeight    = 100
 	coalWidth     = 150
-	coalStartX    = 0
+	coalStartX    = 500
 	coalStartY    = 0
 	coalDropSpeed = 10
 
@@ -99,6 +98,8 @@ func (c *coal) paint(r *sdl.Renderer) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	fmt.Printf("sit: %t\n", c.stoppedInTracks)
+
 	if c.stoppedInTracks {
 		explosionRect := &sdl.Rect{
 			W: explosionWidth,
@@ -116,6 +117,8 @@ func (c *coal) paint(r *sdl.Renderer) error {
 
 	i := c.time % len(c.textures)
 	rect := &sdl.Rect{W: coalWidth, H: coalHeight, X: c.x, Y: c.y}
+
+	fmt.Printf("%d %d\n", c.x, c.y)
 
 	if err := r.Copy(c.textures[i], nil, rect); err != nil {
 		return fmt.Errorf("could not copy coal: %v", err)
@@ -158,6 +161,13 @@ func (c *coal) FellToEarth() bool {
 	return c.fellToEarth
 }
 
+func (c *coal) Life() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.life
+}
+
 func (c *coal) StoppedInTracks() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -168,8 +178,6 @@ func (c *coal) StoppedInTracks() bool {
 func (c *coal) reset() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	time.Sleep(time.Second)
 
 	c.life = 3
 	c.x = coalStartX

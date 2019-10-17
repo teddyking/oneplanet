@@ -42,10 +42,14 @@ func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 					return
 				}
 			case <-tick:
-				if s.coal.FellToEarth() {
+				if s.coal.FellToEarth() && s.coal.Life() > 0 {
 					drawTitle(r, "GAME OVER")
 					time.Sleep(time.Second)
 					s.restart()
+				}
+
+				if s.coal.FellToEarth() {
+					s.coal.reset()
 				}
 
 				s.update()
