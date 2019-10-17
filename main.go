@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -14,6 +13,9 @@ const (
 	pathToFont          = "assets/fonts/block-cartoon.ttf"
 	pathToBackgroundImg = "assets/img/background.jpg"
 	pathToImgs          = "assets/img"
+
+	windowWidth  = 1920
+	windowHeight = 1080
 )
 
 func main() {
@@ -34,7 +36,7 @@ func run() error {
 	}
 	defer ttf.Quit()
 
-	w, r, err := sdl.CreateWindowAndRenderer(1920, 1080, 0)
+	w, r, err := sdl.CreateWindowAndRenderer(windowWidth, windowHeight, 0)
 	if err != nil {
 		return fmt.Errorf("unable to create window: %v", err)
 	}

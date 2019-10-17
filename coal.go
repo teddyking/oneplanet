@@ -7,11 +7,21 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+const (
+	coalHeight    = 100
+	coalWidth     = 150
+	coalStartX    = 0
+	coalStartY    = 0
+	coalDropSpeed = 10
+)
+
 type coal struct {
 	time     int
 	textures []*sdl.Texture
+	life     int
 
-	y float64
+	x int32
+	y int32
 }
 
 func newCoal(r *sdl.Renderer) (*coal, error) {
@@ -25,15 +35,20 @@ func newCoal(r *sdl.Renderer) (*coal, error) {
 		textures = append(textures, texture)
 	}
 
-	return &coal{textures: textures, y: 200}, nil
+	return &coal{
+		life:     3,
+		textures: textures,
+		x:        coalStartX,
+		y:        coalStartY,
+	}, nil
 }
 
 func (c *coal) paint(r *sdl.Renderer) error {
 	c.time++
-	c.y -= 10
+	c.y += coalDropSpeed
 
 	i := c.time % len(c.textures)
-	rect := &sdl.Rect{W: 150, H: 100, X: 300, Y: (200 - int32(c.y))}
+	rect := &sdl.Rect{W: coalWidth, H: coalHeight, X: c.x, Y: c.y}
 
 	if err := r.Copy(c.textures[i], nil, rect); err != nil {
 		return fmt.Errorf("could not copy coal: %v", err)
@@ -46,4 +61,8 @@ func (c *coal) destroy() {
 	for _, t := range c.textures {
 		t.Destroy()
 	}
+}
+
+func (c *coal) position() (int32, int32) {
+	return c.x, c.y
 }

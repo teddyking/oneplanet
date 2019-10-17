@@ -53,16 +53,37 @@ func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 }
 
 func (s *scene) handleEvent(event sdl.Event) bool {
-	switch event.(type) {
+	switch e := event.(type) {
+	case *sdl.AudioDeviceEvent:
+		// ignore for now
+	case *sdl.WindowEvent:
+		// ignore for now
+	case *sdl.MouseMotionEvent:
+		// ignore for now
+	case *sdl.MouseButtonEvent:
+		s.handleClick(e)
 	case *sdl.QuitEvent:
 		return true
-	case *sdl.MouseButtonEvent:
-		fmt.Println("click")
 	default:
 		fmt.Printf("default event: %T\n", event)
 	}
 
 	return false
+}
+
+func (s *scene) handleClick(event *sdl.MouseButtonEvent) {
+	mouseX, mouseY := event.X, event.Y
+	mouseW, mouseH := int32(1), int32(1)
+
+	coalX, coalY := s.coal.position()
+	coalW, coalH := int32(coalWidth), int32(coalHeight)
+
+	if mouseX < coalX+coalW &&
+		mouseX+mouseW > coalX &&
+		mouseY < coalY+coalH &&
+		mouseY+mouseH > coalY {
+		fmt.Println("BANG")
+	}
 }
 
 func (s *scene) paint(r *sdl.Renderer) error {
