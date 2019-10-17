@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -11,6 +13,7 @@ import (
 const (
 	pathToFont          = "assets/fonts/block-cartoon.ttf"
 	pathToBackgroundImg = "assets/img/background.jpg"
+	pathToImgs          = "assets/img"
 )
 
 func main() {
@@ -37,31 +40,25 @@ func run() error {
 	}
 	defer w.Destroy()
 
+	sdl.PumpEvents()
+
 	if err := drawTitle(r); err != nil {
 		return fmt.Errorf("unable to draw title: %v", err)
 	}
 
-	running := true
-	for running {
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch event.(type) {
-			case *sdl.QuitEvent:
-				running = false
-				break
-			case *sdl.MouseButtonEvent:
-				s, err := newScene(r)
-				if err != nil {
-					return fmt.Errorf("unable to create scene: %v", err)
-				}
-				defer s.destroy()
+	// disply title for 1 second
+	time.Sleep(time.Second)
 
-				s.paint(r)
-				break
-			}
-		}
+	s, err := newScene(r)
+	if err != nil {
+		return fmt.Errorf("unable to create scene: %v", err)
 	}
+	defer s.destroy()
 
-	return nil
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(time.Second*3, cancel)
+
+	return <-s.run(ctx, r)
 }
 
 func drawTitle(r *sdl.Renderer) error {
