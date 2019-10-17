@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -46,7 +46,6 @@ func run() error {
 		return fmt.Errorf("unable to draw title: %v", err)
 	}
 
-	// disply title for 1 second
 	time.Sleep(time.Millisecond * 100)
 
 	s, err := newScene(r)
@@ -55,10 +54,17 @@ func run() error {
 	}
 	defer s.destroy()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	time.AfterFunc(time.Second*3, cancel)
+	events := make(chan sdl.Event)
+	errc := s.run(events, r)
 
-	return <-s.run(ctx, r)
+	runtime.LockOSThread()
+	for {
+		select {
+		case events <- sdl.WaitEvent():
+		case err := <-errc:
+			return err
+		}
+	}
 }
 
 func drawTitle(r *sdl.Renderer) error {

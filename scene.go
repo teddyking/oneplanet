@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -29,16 +28,20 @@ func newScene(r *sdl.Renderer) (*scene, error) {
 	return &scene{bg: bg, coal: coal}, nil
 }
 
-func (s *scene) run(ctx context.Context, r *sdl.Renderer) <-chan error {
+func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 	errc := make(chan error)
 
 	go func() {
 		defer close(errc)
-		for range time.Tick(time.Millisecond * 60) {
+		tick := time.Tick(time.Millisecond * 60)
+
+		for {
 			select {
-			case <-ctx.Done():
-				return
-			default:
+			case e := <-events:
+				if done := s.handleEvent(e); done {
+					return
+				}
+			case <-tick:
 				if err := s.paint(r); err != nil {
 					errc <- err
 				}
@@ -47,6 +50,19 @@ func (s *scene) run(ctx context.Context, r *sdl.Renderer) <-chan error {
 	}()
 
 	return errc
+}
+
+func (s *scene) handleEvent(event sdl.Event) bool {
+	switch event.(type) {
+	case *sdl.QuitEvent:
+		return true
+	case *sdl.MouseButtonEvent:
+		fmt.Println("click")
+	default:
+		fmt.Printf("default event: %T\n", event)
+	}
+
+	return false
 }
 
 func (s *scene) paint(r *sdl.Renderer) error {
