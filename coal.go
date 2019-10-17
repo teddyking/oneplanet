@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 
 	"github.com/veandco/go-sdl2/img"
@@ -179,8 +180,11 @@ func (c *coal) reset() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	minX := 0
+	maxX := 1000
+
 	c.life = 3
-	c.x = coalStartX
+	c.x = int32(rand.Intn(maxX-minX) + minX)
 	c.y = coalStartY
 	c.fellToEarth = false
 	c.stoppedInTracks = false
