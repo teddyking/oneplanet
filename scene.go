@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/veandco/go-sdl2/img"
@@ -9,9 +10,9 @@ import (
 )
 
 type scene struct {
-	bg   *sdl.Texture
-	coal *coal
-	tree *sdl.Texture
+	bg        *sdl.Texture
+	coal      *coal
+	explosion *explosion
 }
 
 func newScene(r *sdl.Renderer) (*scene, error) {
@@ -25,7 +26,12 @@ func newScene(r *sdl.Renderer) (*scene, error) {
 		return nil, fmt.Errorf("could not create coal: %v", err)
 	}
 
-	return &scene{bg: bg, coal: coal}, nil
+	explosion, err := newExplosion(r)
+	if err != nil {
+		return nil, fmt.Errorf("could not create explosion: %v", err)
+	}
+
+	return &scene{bg: bg, coal: coal, explosion: explosion}, nil
 }
 
 func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
@@ -46,12 +52,6 @@ func (s *scene) run(events <-chan sdl.Event, r *sdl.Renderer) <-chan error {
 
 				if s.coal.FellToEarth() {
 					drawTitle(r, "GAME OVER")
-					time.Sleep(time.Second)
-					s.restart()
-				}
-
-				if s.coal.StoppedInTracks() {
-					drawTitle(r, "YOU WON")
 					time.Sleep(time.Second)
 					s.restart()
 				}
@@ -111,8 +111,19 @@ func (s *scene) paint(r *sdl.Renderer) error {
 		return fmt.Errorf("could not copy background: %v", err)
 	}
 
-	if err := s.coal.paint(r); err != nil {
-		return fmt.Errorf("could not pain coal: %v", err)
+	if s.coal.stoppedInTracks {
+		x, y := s.coal.position()
+		if err := s.explosion.paint(r, x, y); err != nil {
+			return fmt.Errorf("could not paint explosion: %v", err)
+		}
+
+		s.coal.reset()
+	}
+
+	if !s.coal.stoppedInTracks {
+		if err := s.coal.paint(r); err != nil {
+			return fmt.Errorf("could not paint coal: %v", err)
+		}
 	}
 
 	r.Present()
@@ -124,6 +135,7 @@ func (s *scene) destroy() {
 	s.coal.destroy()
 }
 
+//TODO: add restart logic
 func (s *scene) restart() {
-	s.coal.restart()
+	os.Exit(0)
 }

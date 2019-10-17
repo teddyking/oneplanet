@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"sync"
+	"time"
 
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
@@ -89,6 +89,10 @@ func (c *coal) paint(r *sdl.Renderer) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	if c.fellToEarth {
+		return nil
+	}
+
 	i := c.time % len(c.textures)
 	rect := &sdl.Rect{W: coalWidth, H: coalHeight, X: c.x, Y: c.y}
 
@@ -96,7 +100,13 @@ func (c *coal) paint(r *sdl.Renderer) error {
 		return fmt.Errorf("could not copy coal: %v", err)
 	}
 
-	numberRect := &sdl.Rect{W: numberWidth, H: numberHeight, X: c.x + (coalWidth / 2) - (numberWidth / 2), Y: c.y + (coalHeight / 2) - (numberHeight * 2)}
+	numberRect := &sdl.Rect{
+		W: numberWidth,
+		H: numberHeight,
+		X: c.x + (coalWidth / 2) - (numberWidth / 2),
+		Y: c.y + (coalHeight / 2) - (numberHeight * 2),
+	}
+
 	if err := r.Copy(c.numberTextures[c.life-1], nil, numberRect); err != nil {
 		return fmt.Errorf("could not copy coal: %v", err)
 	}
@@ -134,10 +144,15 @@ func (c *coal) StoppedInTracks() bool {
 	return c.stoppedInTracks
 }
 
-//TODO: add restart logic
-func (c *coal) restart() {
+func (c *coal) reset() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	os.Exit(0)
+	time.Sleep(time.Second)
+
+	c.life = 3
+	c.x = coalStartX
+	c.y = coalStartY
+	c.fellToEarth = false
+	c.stoppedInTracks = false
 }
